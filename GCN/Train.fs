@@ -31,8 +31,8 @@ let run (datafolder,no_cuda,fastmode,epochs,dropout,lr,hidden,seed,weight_decay)
         model.Module.Train()        
         optimizer.zero_grad()
         let output = model.forward(features)
-        let loss_train = loss.Invoke(output.[ idx_train], labels.[idx_train])
-        let acc_train = Utils.accuracy(output.[idx_train], labels.[idx_train])
+        let loss_train = nll_loss(output.[ idx_train], labels.[idx_train])
+        let acc_train = accuracy(output.[idx_train], labels.[idx_train])
         loss_train.backward()
         optimizer.step()
 
@@ -40,17 +40,15 @@ let run (datafolder,no_cuda,fastmode,epochs,dropout,lr,hidden,seed,weight_decay)
         let data = parms |> Array.map TorchSharp.Fun.Tensor.getData<float32>
         let i = 1
 
-        let loss_val,acc_val =
-            if not fastmode then
-                model.Module.Eval()
-                let y' = model.forward(features)
-                let loss_val = loss.Invoke(y'.[idx_val], labels.[idx_val])
-                let acc_val = Utils.accuracy(y'.[idx_val], labels.[idx_val])
-                loss_val,acc_val
+        let output =
+            if fastmode then
+                output
             else
-                let loss_val = loss.Invoke(output.[idx_val], labels.[idx_val])
-                let acc_val = Utils.accuracy(output.[idx_val], labels.[idx_val])
-                loss_val,acc_val
+                model.Module.Eval()
+                model.forward(features)
+
+        let loss_val = nll_loss(output.[idx_val], labels.[idx_val])
+        let acc_val = accuracy(output.[idx_val], labels.[idx_val])
                 
         printf $"Epoch: {epoch}, loss_train: %0.4f{float loss_train}, acc_train: %0.4f{acc_train}, "
         printfn $"loss_val: %0.4f{float loss_val}, acc_val: %0.4f{acc_val}"
