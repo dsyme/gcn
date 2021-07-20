@@ -36,10 +36,6 @@ let run (datafolder,no_cuda,fastmode,epochs,dropout,lr,hidden,seed,weight_decay)
         loss_train.backward()
         optimizer.step()
 
-        let parms = model.Module.parameters()
-        let data = parms |> Array.map TorchSharp.Fun.Tensor.getData<float32>
-        let i = 1
-
         let output =
             if fastmode then
                 output
